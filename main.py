@@ -33,10 +33,6 @@ def fetch_matches(teams):
             timestamp = int(time_elem["data-unix"]) // 1000
             match_time = datetime.fromtimestamp(timestamp, timezone.utc)
 
-            # Фильтр по времени: только ближайшие 24 часа
-            if not (now <= match_time <= now + timedelta(hours=24)):
-                continue
-
             team1_elem = block.select_one("div.match-team.team1 div.match-teamname")
             team2_elem = block.select_one("div.match-team.team2 div.match-teamname")
             if not team1_elem or not team2_elem:
