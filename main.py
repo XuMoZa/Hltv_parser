@@ -1,10 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import  timedelta
+from datetime import timedelta
 import datetime
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 
 tracked_teams = {"faze", "falcons", "spirit"}
 HLTV_URL = "https://www.hltv.org/matches"
@@ -18,7 +20,7 @@ def fetch_matches(teams):
     for match in soup.select("a.match"):
         try:
             timestamp = int(match.select_one(".matchTime")["data-unix"]) // 1000
-            match_time = datetime.datetime.fromtimestamp(timestamp= timestamp, tz=datetime.UTC)
+            match_time = datetime.datetime.fromtimestamp(timestamp=timestamp, tz=datetime.UTC)
             if not now <= match_time <= now + timedelta(hours=24):
                 continue
 
@@ -51,11 +53,25 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tracked_teams.add(team)
     await update.message.reply_text(f"Команда '{team}' добавлена!")
 
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running")
+
+def run_server():
+    port = int(os.environ.get("PORT", 8000))
+    server = HTTPServer(('0.0.0.0', port), Handler)
+    server.serve_forever()
+
 def main():
+    threading.Thread(target=run_server, daemon=True).start()
+
     app = ApplicationBuilder().token(os.getenv("YOUR_TELEGRAM_BOT_TOKEN")).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("matches", matches))
     app.add_handler(CommandHandler("add", add))
     app.run_polling()
 
-# main()  # Запускайте этот код у себя локально
+if __name__ == "__main__":
+    main()
