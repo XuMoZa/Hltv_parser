@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import timedelta
-import datetime
+from datetime import timedelta, datetime, timezone
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -11,29 +10,48 @@ import threading
 tracked_teams = {"faze", "falcons", "spirit"}
 HLTV_URL = "https://www.hltv.org/matches"
 
+
 def fetch_matches(teams):
-    response = requests.get(HLTV_URL, headers={"User-Agent": "Mozilla/5.0"})
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+    }
+    response = requests.get(HLTV_URL, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
-    now = datetime.datetime.now(datetime.UTC)
+
+    now = datetime.now(timezone.utc)
     matches = []
 
-    for match in soup.select("a.match"):
+    # Находим все блоки с матчами по классу "match-bottom"
+    match_blocks = soup.select("div.match-bottom")
+
+    for block in match_blocks:
         try:
-            timestamp = int(match.select_one(".matchTime")["data-unix"]) // 1000
-            match_time = datetime.datetime.fromtimestamp(timestamp=timestamp, tz=datetime.UTC)
-            if not now <= match_time <= now + timedelta(hours=24):
+            time_elem = block.select_one("div.match-time")
+            if not time_elem or "data-unix" not in time_elem.attrs:
+                continue
+            timestamp = int(time_elem["data-unix"]) // 1000
+            match_time = datetime.fromtimestamp(timestamp, timezone.utc)
+
+            # Фильтр по времени: только ближайшие 24 часа
+            if not (now <= match_time <= now + timedelta(hours=24)):
                 continue
 
-            team1 = match.select_one(".team1 .team").text.strip().lower()
-            team2 = match.select_one(".team2 .team").text.strip().lower()
+            team1_elem = block.select_one("div.match-team.team1 div.match-teamname")
+            team2_elem = block.select_one("div.match-team.team2 div.match-teamname")
+            if not team1_elem or not team2_elem:
+                continue
 
-            for t in teams:
-                if t in team1 or t in team2:
-                    matches.append(f"{match_time.strftime('%d.%m %H:%M UTC')} — {team1.title()} vs {team2.title()}")
-                    break
-        except:
+            team1 = team1_elem.text.strip().lower()
+            team2 = team2_elem.text.strip().lower()
+
+            if any(t in team1 or t in team2 for t in teams):
+                matches.append(f"{match_time.strftime('%d.%m %H:%M UTC')} — {team1.title()} vs {team2.title()}")
+        except Exception as e:
+            print(f"Ошибка при парсинге матча: {e}")
             continue
     return matches
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я отслеживаю матчи. Напиши /matches чтобы узнать ближайшие игры.")
