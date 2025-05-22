@@ -49,11 +49,13 @@ def fetch_matches(teams):
 
             team1_elem = block.select_one("div.match-team.team1 div.match-teamname")
             team2_elem = block.select_one("div.match-team.team2 div.match-teamname")
-            if not team1_elem or not team2_elem:
-                continue
-
-            team1 = team1_elem.text.strip().lower()
-            team2 = team2_elem.text.strip().lower()
+            if not team1_elem:
+                team1 = "tbd"
+            elif not team2_elem:
+                team2 = "tbd"
+            else:
+                team1 = team1_elem.text.strip().lower()
+                team2 = team2_elem.text.strip().lower()
 
             if any(t == team1 or t == team2 for t in teams):
                 matches.append(f"{(match_time + timedelta(hours=3)).strftime('%d.%m %H:%M UTC')} — {team1.title()} vs {team2.title()}")
