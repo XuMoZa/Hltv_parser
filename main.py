@@ -10,7 +10,7 @@ import threading
 
 tracked_teams = {"faze", "falcons", "spirit"}
 HLTV_URL = "https://www.hltv.org/matches"
-Api_key = "15ba8bd2c750abaf5d0a3d675c0a94a1"
+Api_key = os.environ.get("api_key")
 keyboard = [
         [InlineKeyboardButton("Показать матчи", callback_data="matches")],
         [InlineKeyboardButton("Список команд", callback_data="list")]
@@ -60,7 +60,7 @@ def fetch_matches(teams):
             if not team2_elem and team1_elem:
                 team2 = "tbd"
                 team1 = team1_elem.text.strip().lower()
-            
+
             if any(t == team1 or t == team2 for t in teams):
                 matches.append(f"{(match_time + timedelta(hours=3)).strftime('%d.%m %H:%M UTC')} — {team1.title()} vs {team2.title()}")
         except Exception as e:
@@ -148,7 +148,7 @@ def run_server():
 def main():
     threading.Thread(target=run_server, daemon=True).start()
 
-    app = ApplicationBuilder().token("8193706960:AAFpNW9R5P5qoHG2xUbZZvbLvxoYEbI0OOo").build()
+    app = ApplicationBuilder().token(os.environ.get("token")).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("matches", matches))
     app.add_handler(CommandHandler("add", add))
