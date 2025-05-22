@@ -107,13 +107,14 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
             team = context.args[0].lower()
         else:
             team = team + " " + (arg.lower())
-    if team in tracked_teams:
+    if team == "tbd":
+        await update.message.reply_text(f"'{team}' не является командой.", reply_markup=reply_markup)
+    elif team in tracked_teams:
         await update.message.reply_text(f"Команда '{team}' уже в списке отслеживаемых.", reply_markup=reply_markup)
     else:
         tracked_teams.add(team)
         await update.message.reply_text(f"Команда '{team}' добавлена!", reply_markup=reply_markup)
-    if team == "tbd":
-        await update.message.reply_text(f"'{team}' не является командой.", reply_markup=reply_markup)
+
 
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
