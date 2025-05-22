@@ -112,6 +112,9 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         tracked_teams.add(team)
         await update.message.reply_text(f"Команда '{team}' добавлена!", reply_markup=reply_markup)
+    if team == "tbd":
+        await update.message.reply_text(f"'{team}' не является командой.", reply_markup=reply_markup)
+
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
