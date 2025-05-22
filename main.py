@@ -141,7 +141,7 @@ def run_server():
 def main():
     threading.Thread(target=run_server, daemon=True).start()
 
-    app = ApplicationBuilder().token("token").build()
+    app = ApplicationBuilder().token(os.environ.get("token")).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("matches", matches))
     app.add_handler(CommandHandler("add", add))
