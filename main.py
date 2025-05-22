@@ -10,7 +10,7 @@ import threading
 
 tracked_teams = {"faze", "falcons", "spirit"}
 HLTV_URL = "https://www.hltv.org/matches"
-Api_key = os.environ.get("api_key")
+Api_key = "15ba8bd2c750abaf5d0a3d675c0a94a1"
 keyboard = [
         [InlineKeyboardButton("Показать матчи", callback_data="matches")],
         [InlineKeyboardButton("Список команд", callback_data="list")]
@@ -49,14 +49,18 @@ def fetch_matches(teams):
 
             team1_elem = block.select_one("div.match-team.team1 div.match-teamname")
             team2_elem = block.select_one("div.match-team.team2 div.match-teamname")
-            if not team1_elem:
-                team1 = "tbd"
-            elif not team2_elem:
-                team2 = "tbd"
-            else:
+            if not team1_elem and not team2_elem:
+                continue
+            if team1_elem and team2_elem:
                 team1 = team1_elem.text.strip().lower()
                 team2 = team2_elem.text.strip().lower()
-
+            if not team1_elem and team2_elem:
+                team1 = "tbd"
+                team2 = team2_elem.text.strip().lower()
+            if not team2_elem and team1_elem:
+                team2 = "tbd"
+                team1 = team1_elem.text.strip().lower()
+            
             if any(t == team1 or t == team2 for t in teams):
                 matches.append(f"{(match_time + timedelta(hours=3)).strftime('%d.%m %H:%M UTC')} — {team1.title()} vs {team2.title()}")
         except Exception as e:
@@ -144,7 +148,7 @@ def run_server():
 def main():
     threading.Thread(target=run_server, daemon=True).start()
 
-    app = ApplicationBuilder().token(os.environ.get("token")).build()
+    app = ApplicationBuilder().token("8193706960:AAFpNW9R5P5qoHG2xUbZZvbLvxoYEbI0OOo").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("matches", matches))
     app.add_handler(CommandHandler("add", add))
