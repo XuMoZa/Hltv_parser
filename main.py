@@ -10,6 +10,7 @@ import threading
 
 tracked_teams = {"faze", "falcons", "spirit"}
 HLTV_URL = "https://www.hltv.org/matches"
+Api_key = os.environ.get("api_key")
 keyboard = [
         [InlineKeyboardButton("Показать матчи", callback_data="matches")],
         [InlineKeyboardButton("Список команд", callback_data="list")]
@@ -27,8 +28,8 @@ def fetch_matches(teams):
         "Priority": "u=0, i"
 }
     print("Fetching matches...")
-    scraper = cloudscraper.create_scraper()
-    response = scraper.get(HLTV_URL)
+    proxy_url = f"http://api.scraperapi.com?api_key={Api_key}&url={HLTV_URL}"
+    response = requests.get(proxy_url)
     if response.status_code == 403:
         return ["Матчи не были загружены, попробуйте позже."]
     soup = BeautifulSoup(response.text, "html.parser")
